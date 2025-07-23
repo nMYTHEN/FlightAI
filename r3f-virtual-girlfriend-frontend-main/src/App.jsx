@@ -3,7 +3,9 @@ import { Canvas } from "@react-three/fiber";
 import { Leva } from "leva";
 import { Experience } from "./components/Experience";
 import { UI } from "./components/UI";
+import { Lipsync } from "wawa-lipsync";
 
+export const lipsyncManager = new Lipsync({});
 function App() {
   return (
     <>
