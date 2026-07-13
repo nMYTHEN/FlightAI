@@ -34,6 +34,28 @@ Das löst das Vertrauensproblem (nur 2 % lassen KI selbst buchen) statt dagegen 
 Martireisen bleibt lizenzierter Reiseveranstalter/-verkäufer → keine eigene Veranstalter-Lizenz
 nötig. (Rechts-/Steuerdetails mit Fachberatung klären — nicht Teil dieses Plans.)
 
+## ✅ Umgesetzt & live (Stand 2026-07-14)
+
+Alles deployed auf flightai.nuriservices.at (root-pm2 `frontend`/`backend`) und end-to-end getestet.
+
+- **Rebrand → NuriReisen** (zentrale `src/config/brand.js`, Tailwind `brand`/`accent`, Header,
+  Titel, Strings; Pink → Petrol). Avatar bleibt (comic-Look ok); RPM-Platzhalter-Shirt offen.
+- **Pluggable Datenschicht** (`backend/data/`, `DATA_PROVIDER`), Mock filtert/normalisiert
+  → DbQuery-Payload ~44× kleiner.
+- **Pluggable LLM-Schicht** (`backend/llm/`, `LLM_PROVIDER` openai|anthropic), `LLM_MAX_TOKENS`
+  statt 100000; OpenAI-TTS bleibt.
+- **BUG-FIX (kritisch):** Alte App stürzte bei JEDER Suche mit `context_length_exceeded` ab
+  (210KB-Dump + 100k completion). Durch Datenschicht + Token-Cap + Loop-Fix (stille Execute-
+  Schritte tolerieren) behoben — Suche funktioniert jetzt.
+- **Session-Persistenz** (sessionId ↔ serverseitiger Store) + **WS-Auto-Reconnect**.
+- **Kamera-Offset**: Lara rückt zur Seite, wenn ein Grid offen ist; Grids auf Desktop rechts.
+- **Mobile-Feinschliff** (iOS-Zoom, Safe-Area, Button-Breite) + statische Lara-Begrüßung.
+- **Geschäftsmodell im Prompt**: `BUCHEN` = unverbindliche Anfrage + Mensch-Handoff, kein Kaufzwang.
+- **Autonomer Deploy**: `deploy.sh` (via 1 feste plink-Freigabe) restart + Verify.
+
+**Noch offen (Prioritätsreihenfolge):** echte Datenquelle (blockiert, siehe unten) · i18n ·
+Avatar-Outfit (3D-Asset) · TTS-Streaming · Analytics/A-B · Filiale-Kiosk.
+
 ## Prinzipien für den ganzen Umbau
 
 1. **WebSocket-Kontrakt bleibt stabil:** Frontend sendet `{ message }`, Backend antwortet

@@ -11,7 +11,9 @@ export const ChatProvider = ({ children }) => {
   const [cameraZoomed, setCameraZoomed] = useState(true);
   const [currentUi, setCurrentUiState] = useState(null);
   const [previousUi, setPreviousUi] = useState(null);
-  const [lastSpokenMessage, setLastSpokenMessage] = useState(null);
+  const [lastSpokenMessage, setLastSpokenMessage] = useState(
+    "Hi! Ich bin Lara, deine unverbindliche Reiseberatung. Wonach suchst du?"
+  );
 
   // Refs so the WebSocket handler (created once) can read current state
   const currentUiRef = useRef(null);
