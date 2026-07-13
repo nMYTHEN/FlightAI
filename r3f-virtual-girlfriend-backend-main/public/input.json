@@ -1,0 +1,23 @@
+{
+  "page": 1,
+  "sf": "2",
+  "date": {
+    "start": "2025-08-03",
+    "end": "2025-08-28"
+  },
+  "departure": {
+    "code": "",
+    "name": "Beliebig"
+  },
+  "destination": {
+    "type": "region",
+    "code": "149",
+    "name": "Antalya - Belek"
+  },
+  "adults": "2",
+  "children": [],
+  "keywordList": ["fwi"],
+  "duration": "7",
+  "giataIdList": [],
+  "directness": "1"
+}

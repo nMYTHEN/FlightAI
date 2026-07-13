@@ -1,14 +1,14 @@
 {
-  "name": "r3f-virtual-girlfriend-backend",
+  "name": "nurireisen-backend",
   "version": "1.0.0",
-  "description": "Backend for the virtual girlfriend app",
+  "description": "NuriReisen — KI-Reiseberater (Backend)",
   "main": "index.js",
   "type": "module",
   "scripts": {
     "start": "node index.js",
-    "dev": "nodemon index.js --ext js"
+    "dev": "nodemon index.js --ext js --env-file=.env"
   },
-  "author": "Wawa SENSEI <contact@wawasensei.dev>",
+  "author": "NuriReisen",
   "dependencies": {
     "cors": "^2.8.5",
     "dotenv": "^16.6.0",

@@ -95,43 +95,14 @@ const facialExpressions = {
   },
 };
 
-const corresponding = {
-  A: "viseme_PP",
-  B: "viseme_kk",
-  C: "viseme_I",
-  D: "viseme_AA",
-  E: "viseme_O",
-  F: "viseme_U",
-  G: "viseme_FF",
-  H: "viseme_TH",
-  X: "viseme_PP",
-};
-
 let setupMode = false;
 
 export function Avatar(props) {
   const { nodes, materials, scene } = useGLTF(
     "/models/685b2b784a14214597d88ae8.glb"
-    // "/models/Test.glb"
   );
 
   const { message, onMessagePlayed, chat } = useChat();
-
-  const [lipsync, setLipsync] = useState();
-
-  // useEffect(() => {
-  //   if (!message) {
-  //     setAnimation("Idle");
-  //     return;
-  //   }
-  //   setAnimation(message.animation);
-  //   setFacialExpression(message.facialExpression);
-  //   setLipsync(message.lipsync);
-  //   const audio = new Audio("data:audio/mp3;base64," + message.audio);
-  //   audio.play();
-  //   setAudio(audio);
-  //   audio.onended = onMessagePlayed;
-  // }, [message]);
 
   const { smoothMovements } = useControls("Avatar", {
     smoothMovements: {
@@ -145,8 +116,16 @@ export function Avatar(props) {
   const group = useRef();
   const { actions, mixer } = useAnimations(animations, group);
   const [animation, setAnimation] = useState(
-    animations.find((a) => a.name === "Idle") ? "Idle" : animations[0].name // Check if Idle animation exists otherwise use first animation
+    animations.find((a) => a.name === "Idle") ? "Idle" : animations[0].name
   );
+
+  const [blink, setBlink] = useState(false);
+  const [winkLeft, setWinkLeft] = useState(false);
+  const [winkRight, setWinkRight] = useState(false);
+  const [facialExpression, setFacialExpression] = useState("");
+  const audioRef = useRef(null);
+  const [audioFile, setAudioFile] = useState(null);
+
   useEffect(() => {
     actions[animation]
       .reset()
@@ -173,29 +152,19 @@ export function Avatar(props) {
 
         if (!setupMode) {
           try {
-            set({
-              [target]: value,
-            });
+            set({ [target]: value });
           } catch (e) {}
         }
       }
     });
   };
 
-  const [blink, setBlink] = useState(false);
-  const [winkLeft, setWinkLeft] = useState(false);
-  const [winkRight, setWinkRight] = useState(false);
-  const [facialExpression, setFacialExpression] = useState("");
-  const [audio, setAudio] = useState();
-  const visemeRef = useRef(null);
-  const volumeRef = useRef(null);
-
   useFrame(() => {
     !setupMode &&
       Object.keys(nodes.EyeLeft.morphTargetDictionary).forEach((key) => {
         const mapping = facialExpressions[facialExpression];
         if (key === "eyeBlinkLeft" || key === "eyeBlinkRight") {
-          return; // eyes wink/blink are handled separately
+          return;
         }
         if (mapping && mapping[key]) {
           lerpMorphTarget(key, mapping[key], 0.1);
@@ -207,14 +176,10 @@ export function Avatar(props) {
     lerpMorphTarget("eyeBlinkLeft", blink || winkLeft ? 1 : 0, 0.5);
     lerpMorphTarget("eyeBlinkRight", blink || winkRight ? 1 : 0, 0.5);
 
-    // LIPSYNC
-    if (setupMode) {
-      return;
-    }
+    if (setupMode) return;
 
     const viseme = lipsyncManager.viseme;
     const state = lipsyncManager.state;
-    const appliedMorphTargets = [];
 
     lerpMorphTarget(
       viseme,
@@ -223,41 +188,13 @@ export function Avatar(props) {
     );
 
     Object.values(VISEMES).forEach((value) => {
-      if (viseme === value) {
-        return;
-      }
+      if (viseme === value) return;
       lerpMorphTarget(
         value,
         0,
         smoothMovements ? (state === "vowel" ? 0.1 : 0.2) : 1
       );
     });
-
-    // if (audio) {
-    //   const currentAudioTime = audio.currentTime;
-
-    //   // Lipsync basierend auf der aktuellen Audiozeit
-    //   if (message && message.lipsync) {
-    //     // Überprüfe alle mouthCues (von der aktuellen Nachricht)
-    //     for (let i = 0; i < message.lipsync.mouthCues.length; i++) {
-    //       const mouthCue = message.lipsync.mouthCues[i];
-
-    //       // Wenn die aktuelle Audiozeit im Bereich der mouthCue liegt, wende das viseme an
-    //       if (
-    //         currentAudioTime >= mouthCue.start &&
-    //         currentAudioTime <= mouthCue.end
-    //       ) {
-    //         lerpMorphTarget(corresponding[mouthCue.value], 1, 0.2);
-    //         break;
-    //       }
-    //     }
-    //   }
-    // }
-
-    // // Setze alle viseme Morphs auf 0, die nicht aktiv sind
-    // Object.values(corresponding).forEach((value) => {
-    //   lerpMorphTarget(value, 0, 0.1); // Rücksetzen
-    // });
   });
 
   useControls("FacialExpressions", {
@@ -288,9 +225,7 @@ export function Avatar(props) {
     logMorphTargetValues: button(() => {
       const emotionValues = {};
       Object.keys(nodes.EyeLeft.morphTargetDictionary).forEach((key) => {
-        if (key === "eyeBlinkLeft" || key === "eyeBlinkRight") {
-          return; // eyes wink/blink are handled separately
-        }
+        if (key === "eyeBlinkLeft" || key === "eyeBlinkRight") return;
         const value =
           nodes.EyeLeft.morphTargetInfluences[
             nodes.EyeLeft.morphTargetDictionary[key]
@@ -307,27 +242,24 @@ export function Avatar(props) {
     Object.assign(
       {},
       ...Object?.keys(nodes?.EyeLeft?.morphTargetDictionary || {})?.map(
-        (key) => {
-          return {
-            [key]: {
-              label: key,
-              value: 0,
-              min: nodes?.EyeLeft?.morphTargetInfluences[
-                nodes?.EyeLeft?.morphTargetDictionary[key]
-              ],
-              max: 1,
-              onChange: (val) => {
-                if (setupMode) {
-                  lerpMorphTarget(key, val, 1);
-                }
-              },
+        (key) => ({
+          [key]: {
+            label: key,
+            value: 0,
+            min: nodes?.EyeLeft?.morphTargetInfluences[
+              nodes?.EyeLeft?.morphTargetDictionary[key]
+            ],
+            max: 1,
+            onChange: (val) => {
+              if (setupMode) lerpMorphTarget(key, val, 1);
             },
-          };
-        }
+          },
+        })
       )
     )
   );
 
+  // Random blink interval
   useEffect(() => {
     let blinkTimeout;
     const nextBlink = () => {
@@ -343,105 +275,48 @@ export function Avatar(props) {
     return () => clearTimeout(blinkTimeout);
   }, []);
 
-  const audioRef = useRef(null);
-  const [audioFile, setAudioFile] = useState("");
-
+  // Lipsync processing loop
   useEffect(() => {
     const analyzeAudio = () => {
       requestAnimationFrame(analyzeAudio);
       lipsyncManager.processAudio();
-      const viseme = lipsyncManager.viseme;
-      const features = lipsyncManager.features;
-      if (visemeRef.current) {
-        visemeRef.current.innerText = viseme;
-      }
-      if (volumeRef.current) {
-        volumeRef.current.innerText = features.volume.toFixed(2);
-      }
-      if (viseme !== prevViseme.current) {
-        setDetectedVisemes((prev) => [...prev, viseme]);
-        prevViseme.current = viseme;
-      }
     };
-
     analyzeAudio();
   }, []);
 
+  // Play audio and drive lipsync when a new audio file is set
   useEffect(() => {
-    audioRef?.current?.addEventListener("ended", handleAudioEnded);
-    return () => {
-      audioRef?.current?.removeEventListener("ended", handleAudioEnded);
+    if (!audioFile) return;
+
+    audioRef.current = audioFile;
+    lipsyncManager.connectAudio(audioFile);
+    audioFile.play();
+
+    const handleEnded = () => {
+      setAudioFile(null);
+      onMessagePlayed();
     };
-  }, []);
+    audioFile.addEventListener("ended", handleEnded);
 
-  const handleAudioEnded = () => {
-    setAudioFile("");
-    onMessagePlayed();
-  };
-  useEffect(() => {
-    if (!audioFile) {
-      return;
-    }
-    setDetectedVisemes([]);
-
-    // Create or update audio element
-    audioRef.current = audioFile; // Update source
-    audioRef?.current?.addEventListener("ended", handleAudioEnded);
-    lipsyncManager.connectAudio(audioRef.current);
-
-    // Connect audio to lipsync
-    audioRef?.current?.play();
-
-    // Cleanup
     return () => {
-      if (audioRef?.current) {
-        audioRef?.current?.pause();
-        // Do not clear src to allow reuse
-      }
+      audioFile.removeEventListener("ended", handleEnded);
+      audioFile.pause();
     };
   }, [audioFile]);
 
-  const [detectedVisemes, setDetectedVisemes] = useState([]);
-  const prevViseme = useRef(null);
-
+  // React to incoming message: set animation, expression, and play audio
   useEffect(() => {
     if (!message) {
       setAnimation("Idle");
       return;
     }
 
-    // Setze die Animation und das Facial Expression
     setAnimation(message.animation);
     setFacialExpression(message.facialExpression);
 
-    // Wenn Audio vorhanden ist, abspielen
     const audio = new Audio("data:audio/wav;base64," + message.audio);
-    // audio.play();
-    setAudio(audio);
     setAudioFile(audio);
-
-    // audio.onended = onMessagePlayed;
-    // lipsyncManager.connectAudio(audio);
-
-    // Lipsync an Audio-Zeit anpassen (während das Audio abgespielt wird)
-    // audio.ontimeupdate = () => {
-    //   if (message.lipsync) {
-    //     const currentAudioTime = audio.currentTime;
-
-    //     // Gehe durch alle mouthCues und vergleiche mit der aktuellen Zeit
-    //     for (let i = 0; i < message.lipsync.mouthCues.length; i++) {
-    //       const mouthCue = message.lipsync.mouthCues[i];
-    //       if (
-    //         currentAudioTime >= mouthCue.start &&
-    //         currentAudioTime <= mouthCue.end
-    //       ) {
-    //         lerpMorphTarget(corresponding[mouthCue.value], 1, 0.2); // Wende das viseme an
-    //         break;
-    //       }
-    //     }
-    //   }
-    // };
-  }, [message]); // Wenn sich das "message" ändert, wird der Effekt erneut ausgeführt
+  }, [message]);
 
   return (
     <group {...props} dispose={null} ref={group}>
@@ -513,5 +388,4 @@ export function Avatar(props) {
 }
 
 useGLTF.preload("/models/685b2b784a14214597d88ae8.glb");
-// useGLTF.preload("/models/Test.glb");
 useGLTF.preload("/models/animations.glb");

@@ -5,49 +5,54 @@ const backendUrl = import.meta.env.VITE_API_URL || "ws://localhost:25576";
 const ChatContext = createContext();
 
 export const ChatProvider = ({ children }) => {
-  const [allMessages, setAllMessages] = useState([]); // Nur {role, text}
-  const [currentAnswer, setCurrentAnswer] = useState([]); // Mit Animation, Audio usw.
+  const [allMessages, setAllMessages] = useState([]);
+  const [currentAnswer, setCurrentAnswer] = useState([]);
   const [loading, setLoading] = useState(false);
   const [cameraZoomed, setCameraZoomed] = useState(true);
-  const [uiQueue, setUiQueue] = useState([]);
-  const [currentUi, setCurrentUi] = useState(null);
+  const [currentUi, setCurrentUiState] = useState(null);
+  const [previousUi, setPreviousUi] = useState(null);
+  const [lastSpokenMessage, setLastSpokenMessage] = useState(null);
 
+  // Refs so the WebSocket handler (created once) can read current state
+  const currentUiRef = useRef(null);
   const ws = useRef(null);
 
   useEffect(() => {
     ws.current = new WebSocket(backendUrl);
+    console.log("WebSocket connecting to", backendUrl);
+
     ws.current.onopen = () => console.log("WebSocket connected");
     ws.current.onclose = () => console.log("WebSocket disconnected");
-    ws.current.onerror = (e) => console.error("WebSocket error", e);
+    ws.current.onerror = (e) => {
+      console.error("WebSocket error", e);
+      setLoading(false);
+    };
 
-    console.log("WebSocket connecting to", backendUrl);
     ws.current.onmessage = (event) => {
-      const { messages, error } = JSON.parse(event.data);
+      const { messages, error, uiAction } = JSON.parse(event.data);
+
       if (error) {
+        console.error("Backend error:", error);
         setLoading(false);
         return;
       }
+
       setLoading(false);
 
-      // Speech-Antworten in currentAnswer
       const speech = messages.filter((m) => m.text);
       setCurrentAnswer(speech.map((m) => ({ ...m, role: "assistant" })));
-
-      // UI-Ereignisse in uiQueue
-      const ui = messages.flatMap((m) => (m.uiAction ? [m.uiAction] : []));
-      setUiQueue((prev) => [...prev, ...ui]);
-
-      // Verlauf (reine Speech) speichern
       setAllMessages((prev) => [
         ...prev,
         ...speech.map((m) => ({ role: "assistant", text: m.text })),
       ]);
 
-      // // Lipsync-Daten übermitteln (falls vorhanden)
-      // const lipsyncData = messages.find((m) => m.lipsync);
-      // if (lipsyncData) {
-      //   setLipsync(lipsyncData.lipsync);
-      // }
+      // Track UI history so "back" works from hotelDetail → hotelGrid
+      const newUi = uiAction?.type ? uiAction : null;
+      if (newUi) {
+        setPreviousUi(currentUiRef.current);
+      }
+      setCurrentUiState(newUi);
+      currentUiRef.current = newUi;
     };
 
     return () => {
@@ -55,38 +60,37 @@ export const ChatProvider = ({ children }) => {
     };
   }, []);
 
-  const chat = (userText) => {
-    setLoading(true);
-    const updated = [...allMessages, { role: "user", text: userText }];
-    setAllMessages(updated);
+  // Keep lastSpokenMessage in sync with what's playing
+  useEffect(() => {
+    if (currentAnswer.length > 0) {
+      setLastSpokenMessage(currentAnswer[0].text);
+    }
+  }, [currentAnswer]);
 
-    ws.current.send(JSON.stringify({ messages: updated }));
+  const chat = (userText) => {
+    if (!ws.current || ws.current.readyState !== WebSocket.OPEN) {
+      console.error("WebSocket not connected");
+      return;
+    }
+    setLoading(true);
+    setAllMessages((prev) => [...prev, { role: "user", text: userText }]);
+    ws.current.send(JSON.stringify({ message: userText }));
   };
 
-  const closeCurrentUi = () => setCurrentUi(null);
-
-  // ---------- UI-Dispatcher ----------
-  useEffect(() => {
-    if (!currentUi && uiQueue.length > 0) {
-      setCurrentUi(uiQueue[0]);
-      setUiQueue((q) => q.slice(1));
-    }
-  }, [uiQueue, currentUi]);
-
-  // Nach dem Abspielen der aktuellen Antwort
   const onMessagePlayed = () => {
     setCurrentAnswer((msgs) => msgs.slice(1));
   };
 
-  // Das nächste Assistant-Message für die Ausgabe
-  const [message, setMessage] = useState();
-  useEffect(() => {
-    if (currentAnswer.length > 0) {
-      setMessage(currentAnswer[0]);
-    } else {
-      setMessage(null);
-    }
-  }, [currentAnswer]);
+  const closeCurrentUi = () => {
+    setCurrentUiState(null);
+    currentUiRef.current = null;
+  };
+
+  const goBackUi = () => {
+    setCurrentUiState(previousUi);
+    currentUiRef.current = previousUi;
+    setPreviousUi(null);
+  };
 
   return (
     <ChatContext.Provider
@@ -97,8 +101,10 @@ export const ChatProvider = ({ children }) => {
         onMessagePlayed,
         currentUi,
         closeCurrentUi,
+        goBackUi,
         cameraZoomed,
         setCameraZoomed,
+        lastSpokenMessage,
       }}
     >
       {children}
