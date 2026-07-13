@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Ungenutztes 123 MB Test-Asset (aus Git-Historie entfernt, GitHub-Limit 100 MB)
+public/models/Test.glb
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
