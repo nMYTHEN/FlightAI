@@ -51,10 +51,15 @@ Alles deployed auf flightai.nuriservices.at (root-pm2 `frontend`/`backend`) und 
 - **Kamera-Offset**: Lara rückt zur Seite, wenn ein Grid offen ist; Grids auf Desktop rechts.
 - **Mobile-Feinschliff** (iOS-Zoom, Safe-Area, Button-Breite) + statische Lara-Begrüßung.
 - **Geschäftsmodell im Prompt**: `BUCHEN` = unverbindliche Anfrage + Mensch-Handoff, kein Kaufzwang.
-- **Autonomer Deploy**: `deploy.sh` (via 1 feste plink-Freigabe) restart + Verify.
+- **i18n** (DE/EN, dependency-frei, Umschalter, localStorage) + **„Mit Berater sprechen"-Button**
+  (Handoff sichtbar) + **sichtbare Fehlermeldung**.
+- **Autonomer Deploy**: `deploy.sh` (via 1 feste plink-Freigabe).
+  **Erkenntnis:** Frontend = statischer Build (`pm2 serve dist`) → braucht `npm run build`
+  (als root, node ≥18 via nvm); Backend = nodemon (Restart reicht). deploy.sh macht beides + Verify.
 
-**Noch offen (Prioritätsreihenfolge):** echte Datenquelle (blockiert, siehe unten) · i18n ·
-Avatar-Outfit (3D-Asset) · TTS-Streaming · Analytics/A-B · Filiale-Kiosk.
+**Noch offen (Prioritätsreihenfolge):** echte Datenquelle (blockiert — keine Creds) ·
+Avatar-Outfit (3D-Asset nötig) · TTS-Streaming (geringer Nutzen, LLM dominiert Latenz) ·
+Analytics/A-B (braucht Infra) · Filiale-Kiosk (erst nach Online-Beweis).
 
 ## Prinzipien für den ganzen Umbau
 
