@@ -5,9 +5,11 @@ import { SpeechBubble } from "./SpeechBubble";
 import { HotelGrid } from "./HotelGrid";
 import { HotelDetail } from "./HotelDetail";
 import { BRAND } from "../config/brand";
+import { useI18n, LOCALES } from "../i18n";
 
 export const UI = ({ hidden, ...props }) => {
   const input = useRef();
+  const { t, lang, setLang } = useI18n();
   const {
     chat,
     loading,
@@ -18,6 +20,8 @@ export const UI = ({ hidden, ...props }) => {
     closeCurrentUi,
     goBackUi,
     lastSpokenMessage,
+    hasError,
+    clearError,
   } = useChat();
 
   const sendMessage = () => {
@@ -29,6 +33,10 @@ export const UI = ({ hidden, ...props }) => {
     }
   };
 
+  const askForAdvisor = () => {
+    if (!loading && !message) chat(t("advisor.request"));
+  };
+
   if (hidden) {
     return null;
   }
@@ -36,9 +44,25 @@ export const UI = ({ hidden, ...props }) => {
   return (
     <>
       <div className="fixed top-0 left-0 right-0 bottom-0 z-10 flex justify-between p-4 flex-col pointer-events-none">
-        <div className="self-start backdrop-blur-md bg-white bg-opacity-60 px-4 py-3 rounded-lg shadow-sm">
-          <h1 className="font-bold text-brand-800 leading-none text-lg">{BRAND.company}</h1>
-          <p className="text-xs text-brand-700/80 mt-0.5">{BRAND.tagline}</p>
+        {/* Kopfzeile: Marke links, Sprachumschalter rechts */}
+        <div className="flex items-start justify-between w-full gap-2">
+          <div className="backdrop-blur-md bg-white bg-opacity-60 px-4 py-3 rounded-lg shadow-sm">
+            <h1 className="font-bold text-brand-800 leading-none text-lg">{BRAND.company}</h1>
+            <p className="text-xs text-brand-700/80 mt-0.5">{BRAND.tagline}</p>
+          </div>
+          <div className="pointer-events-auto flex gap-1 bg-white/60 backdrop-blur-md rounded-lg p-1">
+            {LOCALES.map((l) => (
+              <button
+                key={l}
+                onClick={() => setLang(l)}
+                className={`px-2 py-1 rounded text-xs font-semibold uppercase transition ${
+                  lang === l ? "bg-brand-600 text-white" : "text-brand-800 hover:bg-white"
+                }`}
+              >
+                {l}
+              </button>
+            ))}
+          </div>
         </div>
 
         {currentUi?.type === "iconGrid" && (
@@ -72,7 +96,7 @@ export const UI = ({ hidden, ...props }) => {
           />
         )}
 
-        <SpeechBubble message={lastSpokenMessage} />
+        <SpeechBubble message={lastSpokenMessage || t("welcome")} />
 
         <div className="w-full flex flex-col items-end justify-center gap-4">
           <button
@@ -110,15 +134,34 @@ export const UI = ({ hidden, ...props }) => {
           className="flex flex-col items-center gap-2 pointer-events-auto max-w-screen-sm w-full mx-auto"
           style={{ paddingBottom: "max(0px, env(safe-area-inset-bottom))" }}
         >
-          {loading && (
-            <div className="text-sm text-white bg-black bg-opacity-40 px-4 py-1 rounded-full backdrop-blur-sm animate-pulse">
-              {BRAND.assistant} denkt...
+          {hasError && (
+            <div
+              onClick={clearError}
+              className="cursor-pointer text-sm text-white bg-red-600/80 px-4 py-1 rounded-full backdrop-blur-sm"
+            >
+              {t("error.generic")}
             </div>
           )}
+          {loading && (
+            <div className="text-sm text-white bg-black bg-opacity-40 px-4 py-1 rounded-full backdrop-blur-sm animate-pulse">
+              {t("status.thinking", { name: BRAND.assistant })}
+            </div>
+          )}
+
+          <button
+            onClick={askForAdvisor}
+            disabled={loading || message}
+            className={`self-center text-xs text-brand-800 bg-white/70 hover:bg-white backdrop-blur-md px-3 py-1.5 rounded-full font-medium transition ${
+              loading || message ? "opacity-40 cursor-not-allowed" : ""
+            }`}
+          >
+            💬 {t("btn.advisor")}
+          </button>
+
           <div className="flex items-center gap-2 w-full">
             <input
               className="w-full text-base placeholder:text-gray-800 placeholder:italic p-4 rounded-md bg-opacity-50 bg-white backdrop-blur-md"
-              placeholder="Schreib eine Nachricht..."
+              placeholder={t("input.placeholder")}
               ref={input}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
@@ -133,7 +176,7 @@ export const UI = ({ hidden, ...props }) => {
                 loading || message ? "cursor-not-allowed opacity-30" : ""
               }`}
             >
-              Senden
+              {t("btn.send")}
             </button>
           </div>
         </div>

@@ -11,9 +11,8 @@ export const ChatProvider = ({ children }) => {
   const [cameraZoomed, setCameraZoomed] = useState(true);
   const [currentUi, setCurrentUiState] = useState(null);
   const [previousUi, setPreviousUi] = useState(null);
-  const [lastSpokenMessage, setLastSpokenMessage] = useState(
-    "Hi! Ich bin Lara, deine unverbindliche Reiseberatung. Wonach suchst du?"
-  );
+  const [lastSpokenMessage, setLastSpokenMessage] = useState(null);
+  const [hasError, setHasError] = useState(false);
 
   // Refs so the WebSocket handler (created once) can read current state
   const currentUiRef = useRef(null);
@@ -41,6 +40,7 @@ export const ChatProvider = ({ children }) => {
       if (error) {
         console.error("Backend error:", error);
         setLoading(false);
+        setHasError(true);
         return;
       }
 
@@ -101,14 +101,18 @@ export const ChatProvider = ({ children }) => {
   const chat = (userText) => {
     if (!ws.current || ws.current.readyState !== WebSocket.OPEN) {
       console.error("WebSocket not connected");
+      setHasError(true);
       return;
     }
+    setHasError(false);
     setLoading(true);
     setAllMessages((prev) => [...prev, { role: "user", text: userText }]);
     ws.current.send(
       JSON.stringify({ message: userText, sessionId: sessionId.current })
     );
   };
+
+  const clearError = () => setHasError(false);
 
   const onMessagePlayed = () => {
     setCurrentAnswer((msgs) => msgs.slice(1));
@@ -138,6 +142,8 @@ export const ChatProvider = ({ children }) => {
         cameraZoomed,
         setCameraZoomed,
         lastSpokenMessage,
+        hasError,
+        clearError,
       }}
     >
       {children}
