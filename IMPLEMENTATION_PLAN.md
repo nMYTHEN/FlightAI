@@ -90,6 +90,11 @@ vollständig durchstarten.
 
 Kern der KI-Modernisierung. Umschaltbar per Env, gleicher Antwort-Kontrakt.
 
+> **Status 2026-07-14: Grundgerüst umgesetzt.** `llm/` mit `openai.js` (json_object) +
+> `anthropic.js` (lazy SDK, JSON-Prefill), Auswahl via `LLM_PROVIDER`, `LLM_MAX_TOKENS`
+> statt 100000, Provider im Startlog, `.env.example` dokumentiert. Default bleibt `openai:o4-mini`
+> (kein Verhaltensänderung/kein Deploy-Risiko). Offen: Claude echt testen, ggf. Tool-Use statt Prefill.
+
 - [ ] Backend-Modul `llm/` mit einheitlichem Interface:
   ```
   createCompletion({ system, messages }) -> { messages, UIAction, Execute, Done, Language }
@@ -184,17 +189,16 @@ Aktuelle Overlays/Grids sind desktop-maus-lastig (`UI.jsx`, `HotelGrid`, `HotelD
   Rückruf/Chat-Handoff). Vertrauens-USP, kein Nachgedanke.
 - [ ] **`BUCHEN` = unverbindliche Anfrage** (kein Auto-Book): erzeugt Lead + E-Mail an
   Reisebüro, klare Kommunikation an Kunden. (Prompt deutet das an — echt implementieren.)
-- [ ] **Echte Datenanbindung** statt `public/mock.json`, hinter pluggable Interface.
-  Kandidaten (Entscheidung offen):
-  - **Traffics** — vermutlich über Martireisen schon vorhanden → faktisch günstigste Option,
-    passt zur bestehenden `mock.json`-Struktur (`connector.traffics.de/v3/rest/hotels`).
-  - **Duffel** — zero upfront, pay-per-booking, Flights + Stays (1 Mio+ Hotels), moderne
-    REST-API, kann auch buchen. Bester Fit für günstiges Online-Prototyping.
-  - **RateHawk / TBO / Hotelbeds** — B2B, breite Inventare + Buchung, brauchen Agentur-Vertrag
-    (über Martireisens Status möglich); später.
-  - **Amadeus Self-Service** — NICHT empfohlen: Self-Service-Portal wird 17.07.2026 abgeschaltet.
-  - `getList()`/`DbQuery` an echte API, Parameter (Datum, Airport, Personen) real durchreichen,
-    Caching/Rate-Limits.
+- [x] **Pluggable Datenschicht gebaut** (`data/`, Provider per `DATA_PROVIDER`), Mock aktiv,
+  DbQuery-Payload ~44× kleiner. Adapter-Slots für echte Quellen offen.
+- [ ] **Echte Datenanbindung** — Realität (Stand 2026-07-13):
+  - **Traffics: gibt es NICHT mehr.** `public/mock.json` = nur historische Sample-Daten.
+  - **„Bistro" = altes Desktop-Programm, KEINE API** → kein Integrationsweg.
+  - **Neue Quelle:** vorhanden, aber User hat keinen direkten Zugriff / kennt sie noch nicht.
+    → BLOCKER: erst identifizieren + Zugang/Credentials/Doku beschaffen, dann Adapter bauen.
+  - **Public-API-Fallback (Self-Serve):** Duffel (Test gratis) / RapidAPI-Hotels / TripAdvisor
+    (5k Calls gratis) — alles **Bausteine, keine Pauschalreisen**, nur für Demo/Anreicherung.
+  - **Amadeus Self-Service** — tot (Portal-Abschaltung 17.07.2026).
 - [ ] **Soft-Buchung → Mitarbeiter-Bestätigung:** Angebot als „vorgemerkte" Buchung an den
   Mitarbeiter; er bestätigt final (ein Klick) in seinem System. FlightAI selbst wickelt **keine
   Zahlung** ab.

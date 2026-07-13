@@ -6,6 +6,7 @@ import { promises as fs } from "fs";
 import OpenAI from "openai";
 import { WebSocketServer } from "ws";
 import { searchOffers, activeProvider } from "./data/index.js";
+import { complete as llmComplete, activeLlm } from "./llm/index.js";
 import { sysMessage } from "./prompts/systemPrompt.js";
 
 const openai = new OpenAI({
@@ -36,6 +37,7 @@ const runDbQuery = async (args) => {
 
 const server = app.listen(port, () => {
   console.log(`NuriReisen backend listening on port ${port}`);
+  console.log(`  LLM: ${activeLlm} | Data: ${activeProvider}`);
 });
 
 const wss = new WebSocketServer({ server });
@@ -59,25 +61,19 @@ wss.on("connection", (ws) => {
       let retryCount = 0;
 
       while (!done && retryCount < 2) {
-        const openaiMessages = [sysMessage, ...chatHistory];
         const time = Date.now();
 
-        let completion;
+        let raw;
         try {
-          completion = await openai.chat.completions.create({
-            model: "o4-mini",
-            max_completion_tokens: 100000,
-            response_format: { type: "json_object" },
-            messages: openaiMessages,
-          });
+          raw = await llmComplete({ system: sysMessage, messages: chatHistory });
         } catch (e) {
-          console.error("OpenAI API Error:", e);
-          return ws.send(JSON.stringify({ error: "OpenAI API-Fehler" }));
+          console.error("LLM API Error:", e);
+          return ws.send(JSON.stringify({ error: "LLM API-Fehler" }));
         }
 
         let result;
         try {
-          result = JSON.parse(completion.choices[0].message.content);
+          result = JSON.parse(raw);
         } catch (err) {
           if (retryCount === 0) {
             retryCount++;
