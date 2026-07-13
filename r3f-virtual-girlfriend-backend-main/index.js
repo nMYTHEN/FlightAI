@@ -72,8 +72,10 @@ wss.on("connection", (ws) => {
 
       let done = false;
       let retryCount = 0;
+      let steps = 0;
 
-      while (!done && retryCount < 2) {
+      while (!done && retryCount < 2 && steps < 8) {
+        steps++;
         const time = Date.now();
 
         let raw;
@@ -96,12 +98,11 @@ wss.on("connection", (ws) => {
           return ws.send(JSON.stringify({ error: "AI JSON Parsing Error: " + err.message }));
         }
 
-        if (!result.messages || !Array.isArray(result.messages)) {
-          return ws.send(JSON.stringify({ error: "AI hat keine messages zurückgegeben" }));
-        }
+        // messages sind optional: stille Zwischenschritte (nur Execute) sind erlaubt.
+        const msgs = Array.isArray(result.messages) ? result.messages : [];
 
-        for (let i = 0; i < result.messages.length; i++) {
-          const msg = result.messages[i];
+        for (let i = 0; i < msgs.length; i++) {
+          const msg = msgs[i];
           const response = await openai.audio.speech.create({
             model: "tts-1",
             voice: "nova",
@@ -112,9 +113,11 @@ wss.on("connection", (ws) => {
           msg.audio = buffer.toString("base64");
         }
 
-        chatHistory.push(
-          ...result.messages.map((m) => ({ role: "assistant", content: m.text }))
-        );
+        if (msgs.length) {
+          chatHistory.push(
+            ...msgs.map((m) => ({ role: "assistant", content: m.text }))
+          );
+        }
 
         if (result.Execute?.function === "DbQuery") {
           const dbResult = await runDbQuery(result.Execute.args);
@@ -128,10 +131,14 @@ wss.on("connection", (ws) => {
 
         console.log(`Response generated in ${Date.now() - time}ms`);
 
-        ws.send(JSON.stringify({
-          messages: result.messages,
-          uiAction: result.UIAction || null,
-        }));
+        // Nur an den Client senden, wenn es etwas zu zeigen gibt
+        // (stille Execute-Zwischenschritte nicht senden).
+        if (msgs.length || result.UIAction) {
+          ws.send(JSON.stringify({
+            messages: msgs,
+            uiAction: result.UIAction || null,
+          }));
+        }
 
         retryCount = 0;
         done = result.Done === true;
