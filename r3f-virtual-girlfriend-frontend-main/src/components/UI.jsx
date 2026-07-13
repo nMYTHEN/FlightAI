@@ -36,7 +36,10 @@ export const UI = ({ hidden, ...props }) => {
   return (
     <>
       <div className="fixed top-0 left-0 right-0 bottom-0 z-10 flex justify-between p-4 flex-col pointer-events-none">
-        <div className="self-start backdrop-blur-md bg-white bg-opacity-50 p-4 rounded-lg"></div>
+        <div className="self-start backdrop-blur-md bg-white bg-opacity-60 px-4 py-3 rounded-lg shadow-sm">
+          <h1 className="font-bold text-brand-800 leading-none text-lg">{BRAND.company}</h1>
+          <p className="text-xs text-brand-700/80 mt-0.5">{BRAND.tagline}</p>
+        </div>
 
         {currentUi?.type === "iconGrid" && (
           <IconGrid

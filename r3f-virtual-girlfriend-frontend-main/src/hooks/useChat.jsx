@@ -30,17 +30,10 @@ export const ChatProvider = ({ children }) => {
   );
 
   useEffect(() => {
-    ws.current = new WebSocket(backendUrl);
-    console.log("WebSocket connecting to", backendUrl);
+    let reconnectTimer;
+    let closedByUnmount = false;
 
-    ws.current.onopen = () => console.log("WebSocket connected");
-    ws.current.onclose = () => console.log("WebSocket disconnected");
-    ws.current.onerror = (e) => {
-      console.error("WebSocket error", e);
-      setLoading(false);
-    };
-
-    ws.current.onmessage = (event) => {
+    const handleMessage = (event) => {
       const { messages, error, uiAction } = JSON.parse(event.data);
 
       if (error) {
@@ -67,7 +60,31 @@ export const ChatProvider = ({ children }) => {
       currentUiRef.current = newUi;
     };
 
+    const connect = () => {
+      console.log("WebSocket connecting to", backendUrl);
+      ws.current = new WebSocket(backendUrl);
+      ws.current.onopen = () => console.log("WebSocket connected");
+      ws.current.onmessage = handleMessage;
+      ws.current.onerror = (e) => {
+        console.error("WebSocket error", e);
+        setLoading(false);
+      };
+      ws.current.onclose = () => {
+        console.log("WebSocket disconnected");
+        setLoading(false);
+        // Auto-Reconnect (Session bleibt via sessionId serverseitig erhalten)
+        if (!closedByUnmount) {
+          clearTimeout(reconnectTimer);
+          reconnectTimer = setTimeout(connect, 1500);
+        }
+      };
+    };
+
+    connect();
+
     return () => {
+      closedByUnmount = true;
+      clearTimeout(reconnectTimer);
       ws.current?.close();
     };
   }, []);
