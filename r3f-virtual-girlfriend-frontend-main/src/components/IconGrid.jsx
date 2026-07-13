@@ -1,6 +1,6 @@
 /* IconGrid.tsx */
 export const IconGrid = ({ title, options, onSelect }) => (
-  <div className="fixed inset-0 z-20 flex items-center justify-center backdrop-blur-sm">
+  <div className="fixed inset-0 z-20 flex items-center justify-center md:justify-end md:pr-[6%] backdrop-blur-sm">
     <div className="bg-white/80 rounded-2xl p-6 w-11/12 max-w-lg">
       <h2 className="font-bold text-xl mb-4 text-center">{title}</h2>
       <div className="grid grid-cols-3 gap-4">

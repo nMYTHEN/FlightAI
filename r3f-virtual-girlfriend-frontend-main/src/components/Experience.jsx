@@ -39,19 +39,22 @@ const Dots = (props) => {
 
 export const Experience = () => {
   const cameraControls = useRef();
-  const { cameraZoomed } = useChat();
+  const { cameraZoomed, currentUi } = useChat();
 
   useEffect(() => {
     cameraControls.current.setLookAt(0, 2, 5, 0, 1.5, 0);
   }, []);
 
   useEffect(() => {
-    if (cameraZoomed) {
+    if (currentUi) {
+      // Grid/Overlay offen: Lara nach links rücken, damit rechts Platz fürs Grid ist.
+      cameraControls.current.setLookAt(0, 1.6, 2.2, 0.85, 1.4, 0, true);
+    } else if (cameraZoomed) {
       cameraControls.current.setLookAt(0, 1.5, 1.5, 0, 1.5, 0, true);
     } else {
       cameraControls.current.setLookAt(0, 2.2, 5, 0, 1.0, 0, true);
     }
-  }, [cameraZoomed]);
+  }, [cameraZoomed, currentUi]);
   return (
     <>
       <CameraControls ref={cameraControls} />

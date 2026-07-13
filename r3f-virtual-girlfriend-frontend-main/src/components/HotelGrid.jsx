@@ -1,7 +1,7 @@
 /* HotelGrid.tsx */
 export const HotelGrid = ({ title, hotels, onSelect }) => (
-  <div className="fixed inset-0 z-20 flex items-center justify-center backdrop-blur-sm overflow-auto">
-    <div className="bg-white/90 rounded-2xl p-6 w-11/12 max-w-4xl">
+  <div className="fixed inset-0 z-20 flex items-center justify-center md:justify-end md:pr-[4%] backdrop-blur-sm overflow-auto">
+    <div className="bg-white/90 rounded-2xl p-6 w-11/12 max-w-4xl md:max-w-2xl">
       <h2 className="font-bold text-xl mb-4 text-center">{title}</h2>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">

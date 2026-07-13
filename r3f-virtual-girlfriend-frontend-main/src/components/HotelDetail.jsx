@@ -1,7 +1,7 @@
 /* HotelDetail.tsx */
 export const HotelDetail = ({ hotel, onBack, onBook }) => (
-  <div className="fixed inset-0 z-20 flex items-center justify-center backdrop-blur-sm overflow-auto">
-    <div className="bg-white/90 rounded-2xl p-6 w-11/12 max-w-2xl">
+  <div className="fixed inset-0 z-20 flex items-center justify-center md:justify-end md:pr-[5%] backdrop-blur-sm overflow-auto">
+    <div className="bg-white/90 rounded-2xl p-6 w-11/12 max-w-2xl md:max-w-xl">
       <button
         onClick={onBack}
         className="text-sm text-blue-600 mb-2 hover:underline"
