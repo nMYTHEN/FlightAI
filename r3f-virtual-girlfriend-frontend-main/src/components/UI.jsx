@@ -103,7 +103,10 @@ export const UI = ({ hidden, ...props }) => {
           </button>
         </div>
 
-        <div className="flex flex-col items-center gap-2 pointer-events-auto max-w-screen-sm w-full mx-auto">
+        <div
+          className="flex flex-col items-center gap-2 pointer-events-auto max-w-screen-sm w-full mx-auto"
+          style={{ paddingBottom: "max(0px, env(safe-area-inset-bottom))" }}
+        >
           {loading && (
             <div className="text-sm text-white bg-black bg-opacity-40 px-4 py-1 rounded-full backdrop-blur-sm animate-pulse">
               {BRAND.assistant} denkt...
@@ -111,7 +114,7 @@ export const UI = ({ hidden, ...props }) => {
           )}
           <div className="flex items-center gap-2 w-full">
             <input
-              className="w-full placeholder:text-gray-800 placeholder:italic p-4 rounded-md bg-opacity-50 bg-white backdrop-blur-md"
+              className="w-full text-base placeholder:text-gray-800 placeholder:italic p-4 rounded-md bg-opacity-50 bg-white backdrop-blur-md"
               placeholder="Schreib eine Nachricht..."
               ref={input}
               onKeyDown={(e) => {
@@ -123,7 +126,7 @@ export const UI = ({ hidden, ...props }) => {
             <button
               disabled={loading || message}
               onClick={sendMessage}
-              className={`bg-brand-600 hover:bg-brand-700 text-white p-4 px-10 font-semibold uppercase rounded-md ${
+              className={`bg-brand-600 hover:bg-brand-700 text-white p-4 px-6 sm:px-10 font-semibold uppercase rounded-md ${
                 loading || message ? "cursor-not-allowed opacity-30" : ""
               }`}
             >
