@@ -42,13 +42,26 @@ const server = app.listen(port, () => {
 
 const wss = new WebSocketServer({ server });
 
+// Session-Speicher: sessionId -> chatHistory. In-memory (reset bei Neustart).
+// TODO: TTL/Größenlimit bzw. echte Persistenz (Redis/DB).
+const sessions = new Map();
+
 wss.on("connection", (ws) => {
   console.log("WebSocket client connected");
-  const chatHistory = [];
+  let chatHistory = []; // Fallback ohne sessionId (nicht persistent)
+  let sessionId = null;
 
   ws.on("message", async (data) => {
     try {
-      const { message: userText } = JSON.parse(data);
+      const { message: userText, sessionId: sid } = JSON.parse(data);
+
+      // Session-Persistenz: bei bekannter sessionId den Verlauf wiederherstellen,
+      // damit Reconnect/Reload das Gespräch nicht verliert.
+      if (sid && sid !== sessionId) {
+        sessionId = sid;
+        if (!sessions.has(sid)) sessions.set(sid, []);
+        chatHistory = sessions.get(sid);
+      }
 
       if (!userText || typeof userText !== "string") {
         return ws.send(JSON.stringify({ error: "Ungültige Nachricht" }));

@@ -17,6 +17,18 @@ export const ChatProvider = ({ children }) => {
   const currentUiRef = useRef(null);
   const ws = useRef(null);
 
+  // Persistente Session-ID, damit der Verlauf einen Reload/Reconnect überlebt.
+  const sessionId = useRef(
+    (() => {
+      let id = localStorage.getItem("nurireisen_session");
+      if (!id) {
+        id = crypto.randomUUID?.() || `${Date.now()}-${Math.random()}`;
+        localStorage.setItem("nurireisen_session", id);
+      }
+      return id;
+    })()
+  );
+
   useEffect(() => {
     ws.current = new WebSocket(backendUrl);
     console.log("WebSocket connecting to", backendUrl);
@@ -74,7 +86,9 @@ export const ChatProvider = ({ children }) => {
     }
     setLoading(true);
     setAllMessages((prev) => [...prev, { role: "user", text: userText }]);
-    ws.current.send(JSON.stringify({ message: userText }));
+    ws.current.send(
+      JSON.stringify({ message: userText, sessionId: sessionId.current })
+    );
   };
 
   const onMessagePlayed = () => {
