@@ -5,7 +5,7 @@ import express from "express";
 import { promises as fs } from "fs";
 import OpenAI from "openai";
 import { WebSocketServer } from "ws";
-import mockdata from "./public/mock.json" assert { type: "json" };
+import { searchOffers, activeProvider } from "./data/index.js";
 import { sysMessage } from "./prompts/systemPrompt.js";
 
 const openai = new OpenAI({
@@ -27,9 +27,11 @@ app.get("/voices", async (req, res) => {
   res.send(await voice.getVoices(elevenLabsApiKey));
 });
 
-const getList = (args) => {
+const runDbQuery = async (args) => {
   console.log("DbQuery args:", args);
-  return mockdata;
+  const offers = await searchOffers(args || {});
+  console.log(`DbQuery -> ${offers.length} Angebote (Provider: ${activeProvider})`);
+  return offers;
 };
 
 const server = app.listen(port, () => {
@@ -106,8 +108,13 @@ wss.on("connection", (ws) => {
         );
 
         if (result.Execute?.function === "DbQuery") {
-          const dbResult = getList(result.Execute.args);
-          chatHistory.push({ role: "user", content: JSON.stringify(dbResult) });
+          const dbResult = await runDbQuery(result.Execute.args);
+          chatHistory.push({
+            role: "user",
+            content:
+              `DbQuery-Ergebnisse (${dbResult.length} Angebote):\n` +
+              JSON.stringify(dbResult),
+          });
         }
 
         console.log(`Response generated in ${Date.now() - time}ms`);

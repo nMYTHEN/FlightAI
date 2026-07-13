@@ -51,8 +51,12 @@ Erlaubte Werte für "animation": Talking_0, Talking_1, Talking_2, Crying, Laughi
 - **Merke dir alle Antworten vom Kunden**, die dir übergeben werden. Die vorherige Unterhaltung wird dir immer mitgegeben.
 - **Frage nur dann erneut**, wenn eine bestimmte Information **noch nicht vorhanden ist**.
 - Sobald du alle nötigen Informationen hast, führe DbQuery aus.
-- Nach DbQuery: Zeige die Ergebnisse als hotelGrid UIAction.
-- Für Hotelbilder: Verwende die pictureUrl aus den DbQuery-Ergebnissen und ersetze "&size=150" durch "&size=10000".
+- Die DbQuery-Ergebnisse sind eine kompakte Angebotsliste. Jedes Angebot hat die Felder:
+  id, name, stars (Hotelkategorie), location, region, operator, pricePerPerson, totalPrice,
+  currency, duration, fromDate, toDate, board (Verpflegung), rating (Gäste-Bewertung), image.
+- Nach DbQuery: Zeige die Ergebnisse als hotelGrid UIAction. Mappe dabei:
+  price = pricePerPerson, image = image (schon hochauflösend, direkt verwenden),
+  rating = rating, tags = z. B. [board, operator]. Erfinde keine Werte.
 
 ---
 

@@ -1,0 +1,39 @@
+/**
+ * Steckbare Datenschicht. Wählt den Provider über die Env `DATA_PROVIDER`.
+ * Alle Provider liefern dieselbe kompakte Angebots-Struktur (siehe normalize.js),
+ * sodass ein Wechsel (mock -> bistro/duffel/traffics) ein Ein-Zeilen-Change ist.
+ *
+ * Verfügbar:
+ *   - "mock"  (Standard): public/mock.json, kostenlos, echte Pauschalreise-Struktur.
+ *
+ * Geplant (Adapter mit gleicher `search(args)`-Signatur ergänzen):
+ *   - "bistro":   Traveltainment/Amadeus Bistro Portal — echter Pauschalreise-Kanal (Produktion).
+ *   - "traffics": connector.traffics.de (falls über Martireisen vorhanden).
+ *   - "duffel":   duffel.com — Flüge + Stays, Test-Modus gratis (ACHTUNG: keine Pauschalreisen).
+ */
+import * as mockProvider from "./mockProvider.js";
+
+const providers = {
+  mock: mockProvider,
+  // bistro: bistroProvider,
+  // traffics: trafficsProvider,
+  // duffel: duffelProvider,
+};
+
+const selected = process.env.DATA_PROVIDER || "mock";
+const provider = providers[selected] || mockProvider;
+
+if (!providers[selected]) {
+  console.warn(`[data] Unbekannter DATA_PROVIDER "${selected}" — nutze "mock".`);
+}
+
+/**
+ * Sucht Reiseangebote.
+ * @param {object} args - { to, from, startDate, endDate, duration, adults, children, maxPricePerPerson, limit }
+ * @returns {Promise<Array>} kompakte, normalisierte Angebote
+ */
+export function searchOffers(args = {}) {
+  return provider.search(args);
+}
+
+export const activeProvider = selected;
