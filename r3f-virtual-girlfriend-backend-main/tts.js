@@ -9,7 +9,7 @@ import OpenAI from "openai";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY || "-" });
 
-const MODEL = process.env.TTS_MODEL || "tts-1";
+const MODEL = process.env.TTS_MODEL || "tts-1-hd";
 const VOICE = process.env.TTS_VOICE || "nova";
 const SPEED = Number(process.env.TTS_SPEED || 1);
 

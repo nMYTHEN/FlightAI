@@ -9,6 +9,15 @@ import { promises as fs } from "fs";
 
 const FILE = new URL("./leads.json", import.meta.url);
 
+export async function readLeads() {
+  try {
+    const list = JSON.parse(await fs.readFile(FILE, "utf-8"));
+    return Array.isArray(list) ? list : [];
+  } catch {
+    return [];
+  }
+}
+
 export async function appendLead(lead) {
   const entry = { ...lead, receivedAt: new Date().toISOString() };
   let list = [];

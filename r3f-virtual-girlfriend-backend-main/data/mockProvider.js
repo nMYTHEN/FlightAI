@@ -17,24 +17,40 @@ export async function search(args = {}) {
   const hotels = mockdata?.data?.response?.hotelList || [];
   let offers = hotels.map((h) => normalizeHotel(h, args)).filter((o) => o.id && o.name);
 
-  // Ziel-Filter (case-insensitive über Ort/Region/Land). Fällt auf alle zurück,
+  // Ziel-Filter (Ort/Region/Land). Weiche Filter fallen auf alle zurück,
   // damit die Demo nie leer ist (mock.json ist eine fixe Antalya-Suche).
   if (args.to) {
     const needle = String(args.to).toLowerCase();
-    const filtered = offers.filter((o) =>
+    const f = offers.filter((o) =>
       [o.location, o.region].filter(Boolean).join(" ").toLowerCase().includes(needle)
     );
-    if (filtered.length) offers = filtered;
+    if (f.length) offers = f;
   }
 
-  // Optionale Preisgrenze pro Person.
+  // Verpflegung (z. B. "All Inclusive", "Frühstück").
+  if (args.board) {
+    const b = String(args.board).toLowerCase();
+    const f = offers.filter((o) => (o.board || "").toLowerCase().includes(b));
+    if (f.length) offers = f;
+  }
+
+  // Harte Filter (dürfen leer ergeben — echtes Suchverhalten).
+  if (args.minStars) {
+    offers = offers.filter((o) => (o.stars ?? 0) >= Number(args.minStars));
+  }
   if (args.maxPricePerPerson) {
     offers = offers.filter(
       (o) => o.pricePerPerson != null && o.pricePerPerson <= Number(args.maxPricePerPerson)
     );
   }
 
-  offers.sort((a, b) => (a.pricePerPerson ?? Infinity) - (b.pricePerPerson ?? Infinity));
+  // Sortierung: price (default) | rating | stars.
+  const sortBy = args.sortBy || "price";
+  offers.sort((a, b) => {
+    if (sortBy === "rating") return (b.rating ?? 0) - (a.rating ?? 0);
+    if (sortBy === "stars") return (b.stars ?? 0) - (a.stars ?? 0);
+    return (a.pricePerPerson ?? Infinity) - (b.pricePerPerson ?? Infinity);
+  });
 
   return offers.slice(0, args.limit || DEFAULT_LIMIT);
 }

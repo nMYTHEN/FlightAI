@@ -26,7 +26,11 @@ Du antwortest **ausschließlich** mit einem gültigen JSON-Objekt – **kein Tex
       "from": "Wien",
       "to": "Antalya",
       "adults": 2,
-      "children": 0
+      "children": 0,
+      "board": "All Inclusive",
+      "minStars": 4,
+      "maxPricePerPerson": 800,
+      "sortBy": "price"
     }
   },
   "Done": true,
