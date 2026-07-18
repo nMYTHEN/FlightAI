@@ -4,6 +4,7 @@ import { useChat } from "../hooks/useChat";
 import { SpeechBubble } from "./SpeechBubble";
 import { HotelGrid } from "./HotelGrid";
 import { HotelDetail } from "./HotelDetail";
+import { ContactForm } from "./ContactForm";
 import { BRAND } from "../config/brand";
 import { useI18n, LOCALES } from "../i18n";
 
@@ -22,6 +23,10 @@ export const UI = ({ hidden, ...props }) => {
     lastSpokenMessage,
     hasError,
     clearError,
+    leadForm,
+    openLeadForm,
+    closeLeadForm,
+    sendLead,
   } = useChat();
 
   const sendMessage = () => {
@@ -34,7 +39,7 @@ export const UI = ({ hidden, ...props }) => {
   };
 
   const askForAdvisor = () => {
-    if (!loading && !message) chat(t("advisor.request"));
+    if (!loading && !message) openLeadForm({});
   };
 
   if (hidden) {
@@ -90,9 +95,19 @@ export const UI = ({ hidden, ...props }) => {
             hotel={currentUi.payload?.hotel}
             onBack={goBackUi}
             onBook={(hotelId) => {
-              closeCurrentUi();
-              chat(`BUCHEN ${hotelId}`);
+              openLeadForm({
+                hotelId,
+                hotel: currentUi.payload?.hotel?.name,
+              });
             }}
+          />
+        )}
+
+        {leadForm && (
+          <ContactForm
+            context={leadForm}
+            onSubmit={(f) => sendLead(f)}
+            onCancel={closeLeadForm}
           />
         )}
 

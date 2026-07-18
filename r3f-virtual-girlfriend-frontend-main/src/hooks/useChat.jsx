@@ -13,6 +13,7 @@ export const ChatProvider = ({ children }) => {
   const [previousUi, setPreviousUi] = useState(null);
   const [lastSpokenMessage, setLastSpokenMessage] = useState(null);
   const [hasError, setHasError] = useState(false);
+  const [leadForm, setLeadForm] = useState(null); // null | { hotel?, hotelId? }
 
   // Refs so the WebSocket handler (created once) can read current state
   const currentUiRef = useRef(null);
@@ -114,6 +115,21 @@ export const ChatProvider = ({ children }) => {
 
   const clearError = () => setHasError(false);
 
+  const openLeadForm = (context = {}) => setLeadForm(context);
+  const closeLeadForm = () => setLeadForm(null);
+
+  const sendLead = (formData) => {
+    if (!ws.current || ws.current.readyState !== WebSocket.OPEN) {
+      setHasError(true);
+      return;
+    }
+    setHasError(false);
+    setLoading(true);
+    const lead = { ...formData, ...(leadForm || {}) };
+    ws.current.send(JSON.stringify({ lead, sessionId: sessionId.current }));
+    setLeadForm(null);
+  };
+
   const onMessagePlayed = () => {
     setCurrentAnswer((msgs) => msgs.slice(1));
   };
@@ -144,6 +160,10 @@ export const ChatProvider = ({ children }) => {
         lastSpokenMessage,
         hasError,
         clearError,
+        leadForm,
+        openLeadForm,
+        closeLeadForm,
+        sendLead,
       }}
     >
       {children}

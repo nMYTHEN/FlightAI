@@ -3,15 +3,12 @@ import "dotenv/config";
 import voice from "elevenlabs-node";
 import express from "express";
 import { promises as fs } from "fs";
-import OpenAI from "openai";
 import { WebSocketServer } from "ws";
 import { searchOffers, activeProvider } from "./data/index.js";
 import { complete as llmComplete, activeLlm } from "./llm/index.js";
+import { speak, ttsLabel } from "./tts.js";
+import { appendLead } from "./leads.js";
 import { sysMessage } from "./prompts/systemPrompt.js";
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || "-",
-});
 
 const elevenLabsApiKey = process.env.ELEVEN_LABS_API_KEY;
 
@@ -37,7 +34,7 @@ const runDbQuery = async (args) => {
 
 const server = app.listen(port, () => {
   console.log(`NuriReisen backend listening on port ${port}`);
-  console.log(`  LLM: ${activeLlm} | Data: ${activeProvider}`);
+  console.log(`  LLM: ${activeLlm} | Data: ${activeProvider} | TTS: ${ttsLabel}`);
 });
 
 const wss = new WebSocketServer({ server });
@@ -53,7 +50,7 @@ wss.on("connection", (ws) => {
 
   ws.on("message", async (data) => {
     try {
-      const { message: userText, sessionId: sid } = JSON.parse(data);
+      const { message: userText, sessionId: sid, lead } = JSON.parse(data);
 
       // Session-Persistenz: bei bekannter sessionId den Verlauf wiederherstellen,
       // damit Reconnect/Reload das Gespräch nicht verliert.
@@ -61,6 +58,25 @@ wss.on("connection", (ws) => {
         sessionId = sid;
         if (!sessions.has(sid)) sessions.set(sid, []);
         chatHistory = sessions.get(sid);
+      }
+
+      // Lead-Erfassung (Kontaktanfrage) — hat Vorrang vor dem Chat.
+      if (lead && typeof lead === "object") {
+        await appendLead({ ...lead, sessionId });
+        const first = (lead.name || "").trim().split(/\s+/)[0];
+        const text = `Danke${first ? " " + first : ""}! Ich habe deine Anfrage aufgenommen — ein Kollege prüft sie und meldet sich zeitnah bei dir. Ganz unverbindlich.`;
+        let audio;
+        try {
+          audio = await speak(text);
+        } catch (e) {
+          console.error("TTS-Fehler (Lead):", e.message);
+        }
+        return ws.send(
+          JSON.stringify({
+            messages: [{ text, audio, facialExpression: "smile", animation: "Talking_1" }],
+            uiAction: null,
+          })
+        );
       }
 
       if (!userText || typeof userText !== "string") {
@@ -103,14 +119,11 @@ wss.on("connection", (ws) => {
 
         for (let i = 0; i < msgs.length; i++) {
           const msg = msgs[i];
-          const response = await openai.audio.speech.create({
-            model: "tts-1",
-            voice: "nova",
-            input: msg.text,
-            response_format: "wav",
-          });
-          const buffer = Buffer.from(await response.arrayBuffer());
-          msg.audio = buffer.toString("base64");
+          try {
+            msg.audio = await speak(msg.text);
+          } catch (e) {
+            console.error("TTS-Fehler:", e.message);
+          }
         }
 
         if (msgs.length) {
