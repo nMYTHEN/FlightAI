@@ -13,10 +13,12 @@
  */
 import * as mockProvider from "./mockProvider.js";
 import * as apiProvider from "./apiProvider.js";
+import * as duffelProvider from "./duffelProvider.js";
 
 const providers = {
   mock: mockProvider,
   api: apiProvider, // generischer HTTP-Provider (API_URL/API_KEY) — für die echte Reise-API
+  duffel: duffelProvider, // Duffel Stays (DUFFEL_TOKEN) — Bausteine, keine Pauschalreisen
 };
 
 const selected = process.env.DATA_PROVIDER || "mock";
