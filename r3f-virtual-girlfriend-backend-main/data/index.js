@@ -14,10 +14,12 @@
 import * as mockProvider from "./mockProvider.js";
 import * as apiProvider from "./apiProvider.js";
 import * as duffelProvider from "./duffelProvider.js";
+import * as martireisenProvider from "./martireisenProvider.js";
 
 const providers = {
   mock: mockProvider,
-  api: apiProvider, // generischer HTTP-Provider (API_URL/API_KEY) — für die echte Reise-API
+  martireisen: martireisenProvider, // Martireisens eigene /api/packages/search — ECHTE Pauschalreisen
+  api: apiProvider, // generischer HTTP-Provider (API_URL/API_KEY)
   duffel: duffelProvider, // Duffel Stays (DUFFEL_TOKEN) — Bausteine, keine Pauschalreisen
 };
 

@@ -66,6 +66,8 @@ Erlaubte Werte für "animation": Talking_0, Talking_1, Talking_2, Crying, Laughi
 - **Merke dir alle Antworten vom Kunden**, die dir übergeben werden. Die vorherige Unterhaltung wird dir immer mitgegeben.
 - **Frage nur dann erneut**, wenn eine bestimmte Information **noch nicht vorhanden ist**.
 - Sobald du alle nötigen Informationen hast, führe DbQuery aus.
+- Die optionalen Filter (board, minStars, maxPricePerPerson, sortBy) NUR setzen, wenn der Kunde
+  sie ausdrücklich wünscht — sonst weglassen (nicht aus dem Beispiel übernehmen).
 - Die DbQuery-Ergebnisse sind eine kompakte Angebotsliste. Jedes Angebot hat die Felder:
   id, name, stars (Hotelkategorie), location, region, operator, pricePerPerson, totalPrice,
   currency, duration, fromDate, toDate, board (Verpflegung), rating (Gäste-Bewertung), image.
