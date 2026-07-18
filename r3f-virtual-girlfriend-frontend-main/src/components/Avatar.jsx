@@ -94,6 +94,31 @@ const facialExpressions = {
     mouthSmileRight: 0.38473918302092225,
     tongueOut: 0.9618479575523053,
   },
+  thinking: {
+    browInnerUp: 0.35,
+    eyeLookUpLeft: 0.35,
+    eyeLookUpRight: 0.35,
+    mouthPucker: 0.25,
+    mouthLeft: 0.2,
+  },
+  excited: {
+    eyeWideLeft: 0.4,
+    eyeWideRight: 0.4,
+    browInnerUp: 0.3,
+    mouthSmileLeft: 0.6,
+    mouthSmileRight: 0.6,
+    cheekSquintLeft: 0.4,
+    cheekSquintRight: 0.4,
+    jawOpen: 0.15,
+  },
+  curious: {
+    browInnerUp: 0.2,
+    eyeWideLeft: 0.25,
+    eyeWideRight: 0.25,
+    mouthSmileLeft: 0.25,
+    mouthSmileRight: 0.15,
+    mouthPressRight: 0.2,
+  },
 };
 
 let setupMode = false;
