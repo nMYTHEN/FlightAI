@@ -258,6 +258,18 @@ export function Avatar(props) {
     )
   );
 
+  // Marken-Outfit: entfernt das aufgedruckte "READY PLAYER ME"-Logo vom Shirt
+  // (RPM ist eingestellt → kein neues GLB nötig) und macht ein einfarbiges
+  // Marken-Top (Petrol). Falls später ein eigenes Modell kommt, einfach entfernen.
+  useEffect(() => {
+    const top = materials?.Wolf3D_Outfit_Top;
+    if (top) {
+      top.map = null;
+      top.color = new THREE.Color("#127279");
+      top.needsUpdate = true;
+    }
+  }, [materials]);
+
   // Random blink interval
   useEffect(() => {
     let blinkTimeout;
