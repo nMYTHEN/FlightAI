@@ -30,6 +30,12 @@ const CATALOG = {
     "lead.cancel": "Abbrechen",
     "lead.submit": "Anfrage senden",
     "lead.needContact": "Bitte E-Mail oder Telefon angeben.",
+    "detail.recommend": "Weiterempfehlung",
+    "detail.reviews": "Bewertungen",
+    "detail.operator": "Veranstalter",
+    "detail.ratingsTitle": "Bewertung im Detail",
+    "detail.perPerson": "p. P.",
+    "detail.total": "gesamt",
   },
   en: {
     "input.placeholder": "Type a message...",
@@ -55,6 +61,12 @@ const CATALOG = {
     "lead.cancel": "Cancel",
     "lead.submit": "Send inquiry",
     "lead.needContact": "Please provide an email or phone number.",
+    "detail.recommend": "would recommend",
+    "detail.reviews": "reviews",
+    "detail.operator": "Operator",
+    "detail.ratingsTitle": "Ratings in detail",
+    "detail.perPerson": "p.p.",
+    "detail.total": "total",
   },
 };
 

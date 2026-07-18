@@ -115,6 +115,12 @@ function normalize(pkg, args, currency) {
     toDate: args.endDate || null,
     board: BOARD[room?.board] || room?.board || null,
     rating: score != null ? Math.min(5, Number(Number(score).toFixed(1))) : null,
+    reviewCount: h?.rating?.count ?? null,
+    recommendationPct: h?.rating?.recommendationPct ?? null,
+    ratingCategories: Array.isArray(h?.rating?.categories)
+      ? h.rating.categories.map((c) => ({ key: c.key, score: c.score }))
+      : null,
+    description: h?.description ? String(h.description).replace(/\s+/g, " ").trim().slice(0, 320) : null,
     image: h?.images?.[0]?.url || null,
   };
 }
@@ -128,14 +134,20 @@ export async function search(args = {}) {
   let checkOut = args.endDate || addDays(checkIn, nights);
   if (checkOut <= checkIn) checkOut = addDays(checkIn, nights);
 
+  const adults = Number(args.adults) || 2;
+  const childAges = Array.isArray(args.childAges)
+    ? args.childAges
+    : Array.from({ length: Number(args.children) || 0 }, () => 8);
+  // Echtes Request-Format (aus dem Browser-Call): rooms[] + nationality + currency.
   const body = {
-    cityCode: args.cityCode || regionFor(args.to),
     origin: airportFor(args.from),
+    cityCode: args.cityCode || regionFor(args.to),
     checkIn,
     checkOut,
     duration: nights,
-    adults: Number(args.adults) || 2,
-    children: Number(args.children) || 0,
+    currency: "EUR",
+    nationality: args.nationality || "AT",
+    rooms: [{ adults, childAges }],
   };
 
   let json;

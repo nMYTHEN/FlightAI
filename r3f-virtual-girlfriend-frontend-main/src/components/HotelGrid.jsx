@@ -15,11 +15,18 @@ export const HotelGrid = ({ title, hotels, onSelect }) => {
               onClick={() => onSelect(hotel.id)}
               className="bg-white rounded-xl shadow-md overflow-hidden hover:scale-[1.02] transition pointer-events-auto text-left"
             >
-              <img
-                src={hotel.image}
-                alt={hotel.name}
-                className="w-full h-32 object-cover"
-              />
+              <div className="relative">
+                <img
+                  src={hotel.image}
+                  alt={hotel.name}
+                  className="w-full h-32 object-cover"
+                />
+                {hotel.recommendationPct != null && (
+                  <span className="absolute top-2 left-2 bg-green-600 text-white text-[11px] font-semibold rounded-full px-2 py-0.5 shadow">
+                    {hotel.recommendationPct}% ✓
+                  </span>
+                )}
+              </div>
               <div className="p-3">
                 <h3 className="font-semibold text-base">{hotel.name}</h3>
                 <p className="text-sm text-gray-600">{hotel.location}</p>
