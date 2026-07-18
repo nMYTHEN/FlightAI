@@ -13,6 +13,7 @@ import { VISEMES } from "wawa-lipsync";
 import { lipsyncManager } from "../App";
 
 import { useChat } from "../hooks/useChat";
+import { AVATAR } from "../config/brand";
 
 const facialExpressions = {
   default: {},
@@ -98,9 +99,7 @@ const facialExpressions = {
 let setupMode = false;
 
 export function Avatar(props) {
-  const { nodes, materials, scene } = useGLTF(
-    "/models/685b2b784a14214597d88ae8.glb"
-  );
+  const { nodes, materials, scene } = useGLTF(AVATAR.model);
 
   const { message, onMessagePlayed, chat } = useChat();
 
@@ -111,7 +110,7 @@ export function Avatar(props) {
     },
   });
 
-  const { animations } = useGLTF("/models/animations.glb");
+  const { animations } = useGLTF(AVATAR.animations);
 
   const group = useRef();
   const { actions, mixer } = useAnimations(animations, group);
@@ -387,5 +386,5 @@ export function Avatar(props) {
   );
 }
 
-useGLTF.preload("/models/685b2b784a14214597d88ae8.glb");
-useGLTF.preload("/models/animations.glb");
+useGLTF.preload(AVATAR.model);
+useGLTF.preload(AVATAR.animations);

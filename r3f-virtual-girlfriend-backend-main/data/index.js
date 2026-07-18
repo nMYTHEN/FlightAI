@@ -12,12 +12,11 @@
  *   - "duffel":   duffel.com — Flüge + Stays, Test-Modus gratis (ACHTUNG: keine Pauschalreisen).
  */
 import * as mockProvider from "./mockProvider.js";
+import * as apiProvider from "./apiProvider.js";
 
 const providers = {
   mock: mockProvider,
-  // bistro: bistroProvider,
-  // traffics: trafficsProvider,
-  // duffel: duffelProvider,
+  api: apiProvider, // generischer HTTP-Provider (API_URL/API_KEY) — für die echte Reise-API
 };
 
 const selected = process.env.DATA_PROVIDER || "mock";

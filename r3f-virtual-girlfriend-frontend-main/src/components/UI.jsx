@@ -97,7 +97,8 @@ export const UI = ({ hidden, ...props }) => {
             onBook={(hotelId) => {
               openLeadForm({
                 hotelId,
-                hotel: currentUi.payload?.hotel?.name,
+                hotel: currentUi.payload?.hotel,
+                hotelName: currentUi.payload?.hotel?.name,
               });
             }}
           />

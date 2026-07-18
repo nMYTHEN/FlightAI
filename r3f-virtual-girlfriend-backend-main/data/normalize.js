@@ -49,8 +49,8 @@ export function normalizeHotel(hotel, args = {}) {
     fromDate: offer?.travelDate?.fromDate || null,
     toDate: offer?.travelDate?.toDate || null,
     board: boardName(offer),
-    // Gäste-Bewertung (holidaycheck-Skala ~0–6, roh x10 → /10)
-    rating: review != null ? Number((review / 10).toFixed(1)) : null,
+    // Gäste-Bewertung: Rohwert 0–100 → auf 0–5 Sterne normalisiert.
+    rating: review != null ? Number((review / 20).toFixed(1)) : null,
     image: bigImage(hotel.mediaData?.pictureUrl),
   };
 }

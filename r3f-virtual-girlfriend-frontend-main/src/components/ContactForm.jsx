@@ -16,8 +16,8 @@ export const ContactForm = ({ context, onSubmit, onCancel }) => {
       <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
         <h2 className="font-bold text-xl mb-1">{t("lead.title")}</h2>
         <p className="text-sm text-gray-600 mb-4">
-          {context?.hotel
-            ? t("lead.subtitleHotel", { hotel: context.hotel })
+          {context?.hotelName
+            ? t("lead.subtitleHotel", { hotel: context.hotelName })
             : t("lead.subtitle")}
         </p>
 

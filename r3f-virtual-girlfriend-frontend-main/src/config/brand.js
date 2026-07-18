@@ -18,3 +18,17 @@ export const BRAND = {
 
 /** Bequemer Voll-Titel, z. B. für <title> oder Header. */
 export const BRAND_TITLE = `${BRAND.company} — Reiseberatung mit ${BRAND.assistant}`;
+
+/**
+ * 3D-Avatar-Modell (Ready Player Me GLB).
+ *
+ * NEUES OUTFIT einspielen (kein Code-Umbau nötig):
+ *  1. Auf readyplayer.me eine Avatarin mit gewünschtem Outfit erstellen/exportieren (.glb).
+ *  2. Die .glb nach `public/models/` legen.
+ *  3. Hier `model` auf den neuen Dateinamen setzen.
+ * Das RPM-Skelett (Wolf3D_*) bleibt gleich → die vorhandenen Animationen passen weiter.
+ */
+export const AVATAR = {
+  model: "/models/685b2b784a14214597d88ae8.glb",
+  animations: "/models/animations.glb",
+};

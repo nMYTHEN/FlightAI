@@ -40,23 +40,70 @@ app.get(["/admin/leads", "/apiv2/admin/leads"], async (req, res) => {
     return res.status(401).send("Zugang erforderlich");
   }
   const leads = (await readLeads()).slice().reverse();
+
+  const fmtDate = (iso) => {
+    try {
+      return esc(new Date(iso).toLocaleString("de-AT"));
+    } catch {
+      return esc(iso);
+    }
+  };
+  const fmtCriteria = (a) => {
+    if (!a) return "—";
+    const p = [];
+    if (a.to) p.push(`Ziel: ${a.to}`);
+    if (a.from) p.push(`ab ${a.from}`);
+    if (a.startDate) p.push(a.duration ? `${a.startDate} (${a.duration} T.)` : a.startDate);
+    if (a.adults) p.push(`${a.adults} Erw.${a.children ? " + " + a.children + " Ki." : ""}`);
+    if (a.board) p.push(a.board);
+    if (a.minStars) p.push(`ab ${a.minStars}★`);
+    if (a.maxPricePerPerson) p.push(`≤ ${a.maxPricePerPerson}€ p.P.`);
+    return esc(p.join(" · ")) || "—";
+  };
+  const fmtHotel = (l) => {
+    const h = l.hotel;
+    if (!h) return '<span class="muted">Allg. Beratung</span>';
+    const name = typeof h === "object" ? h.name : h;
+    const loc = typeof h === "object" ? h.location || "" : "";
+    const price = typeof h === "object" && h.price ? ` · ${h.price}€` : "";
+    const q = encodeURIComponent(`${name} ${loc} Hotel`);
+    return `<a href="https://www.google.com/search?q=${q}" target="_blank" rel="noopener">${esc(name)}</a>${esc((loc ? " — " + loc : "") + price)}`;
+  };
+  const fmtConv = (conv) => {
+    if (!conv || !conv.length) return "";
+    const lines = conv
+      .map((m) => `<div><b>${m.role === "user" ? "Kunde" : "Lara"}:</b> ${esc(m.text)}</div>`)
+      .join("");
+    return `<details><summary>Verlauf (${conv.length})</summary><div class="conv">${lines}</div></details>`;
+  };
+
   const rows = leads
     .map(
-      (l) => `<tr><td>${esc(l.receivedAt)}</td><td>${esc(l.name)}</td><td>${esc(l.email)}</td><td>${esc(l.phone)}</td><td>${esc(l.hotel)}</td><td>${esc(l.note)}</td></tr>`
+      (l) => `<tr>
+    <td>${fmtDate(l.receivedAt)}</td>
+    <td><b>${esc(l.name) || "—"}</b><br><a href="mailto:${esc(l.email)}">${esc(l.email)}</a>${l.phone ? "<br>" + esc(l.phone) : ""}</td>
+    <td>${fmtHotel(l)}</td>
+    <td>${fmtCriteria(l.searchArgs)}</td>
+    <td>${esc(l.note)}${fmtConv(l.conversation)}</td>
+  </tr>`
     )
     .join("");
+
   res.send(`<!doctype html><html lang="de"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>NuriReisen — Leads</title>
 <style>body{font-family:system-ui,sans-serif;margin:24px;color:#16232b;background:#fff}
-h1{font-size:20px}.count{color:#4a5a60;font-weight:400}
+h1{font-size:20px}.count{color:#4a5a60;font-weight:400}.muted{color:#4a5a60}
 table{border-collapse:collapse;width:100%;font-size:14px}
 th,td{border-bottom:1px solid #e2e6e7;text-align:left;padding:8px 10px;vertical-align:top}
 th{background:#f4f5f6;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:#4a5a60}
-tr:hover td{background:#fafbfb}</style></head>
+tr:hover td{background:#fafbfb}a{color:#127279}
+details{margin-top:6px}summary{cursor:pointer;color:#127279;font-size:13px}
+.conv{margin-top:6px;max-height:220px;overflow:auto;background:#f7f8f8;border-radius:8px;padding:8px;font-size:13px;line-height:1.5}
+.conv b{color:#134b50}</style></head>
 <body><h1>NuriReisen — Kontaktanfragen <span class="count">(${leads.length})</span></h1>
-<table><thead><tr><th>Eingegangen</th><th>Name</th><th>E-Mail</th><th>Telefon</th><th>Hotel</th><th>Nachricht</th></tr></thead>
-<tbody>${rows || '<tr><td colspan="6">Noch keine Anfragen.</td></tr>'}</tbody></table></body></html>`);
+<table><thead><tr><th>Eingegangen</th><th>Kontakt</th><th>Interesse</th><th>Kriterien</th><th>Nachricht / Verlauf</th></tr></thead>
+<tbody>${rows || '<tr><td colspan="5">Noch keine Anfragen.</td></tr>'}</tbody></table></body></html>`);
 });
 
 const runDbQuery = async (args) => {
@@ -76,6 +123,8 @@ const wss = new WebSocketServer({ server });
 // Session-Speicher: sessionId -> chatHistory. In-memory (reset bei Neustart).
 // TODO: TTL/Größenlimit bzw. echte Persistenz (Redis/DB).
 const sessions = new Map();
+// Zusatzkontext pro Session: sessionId -> { lastArgs, lastHotels } (für Lead-Anreicherung).
+const sessionMeta = new Map();
 
 wss.on("connection", (ws) => {
   console.log("WebSocket client connected");
@@ -96,7 +145,24 @@ wss.on("connection", (ws) => {
 
       // Lead-Erfassung (Kontaktanfrage) — hat Vorrang vor dem Chat.
       if (lead && typeof lead === "object") {
-        await appendLead({ ...lead, sessionId });
+        const meta = sessionId ? sessionMeta.get(sessionId) : null;
+        const transcript = (sessionId ? sessions.get(sessionId) : chatHistory) || [];
+        const conversation = transcript
+          .filter(
+            (m) =>
+              typeof m.content === "string" &&
+              !m.content.startsWith("DbQuery-Ergebnisse")
+          )
+          .slice(-20)
+          .map((m) => ({ role: m.role, text: m.content }));
+
+        await appendLead({
+          ...lead,
+          sessionId,
+          searchArgs: meta?.lastArgs || null,
+          resultHotels: meta?.lastHotels || null,
+          conversation,
+        });
         const first = (lead.name || "").trim().split(/\s+/)[0];
         const text = `Danke${first ? " " + first : ""}! Ich habe deine Anfrage aufgenommen — ein Kollege prüft sie und meldet sich zeitnah bei dir. Ganz unverbindlich.`;
         let audio;
@@ -174,6 +240,18 @@ wss.on("connection", (ws) => {
               `DbQuery-Ergebnisse (${dbResult.length} Angebote):\n` +
               JSON.stringify(dbResult),
           });
+          if (sessionId) {
+            sessionMeta.set(sessionId, {
+              lastArgs: result.Execute.args || null,
+              lastHotels: dbResult.slice(0, 5).map((h) => ({
+                id: h.id,
+                name: h.name,
+                location: h.location,
+                pricePerPerson: h.pricePerPerson,
+                currency: h.currency,
+              })),
+            });
+          }
         }
 
         console.log(`Response generated in ${Date.now() - time}ms`);
