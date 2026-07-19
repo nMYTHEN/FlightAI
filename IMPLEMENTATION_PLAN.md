@@ -57,9 +57,15 @@ Alles deployed auf flightai.nuriservices.at (root-pm2 `frontend`/`backend`) und 
   **Erkenntnis:** Frontend = statischer Build (`pm2 serve dist`) → braucht `npm run build`
   (als root, node ≥18 via nvm); Backend = nodemon (Restart reicht). deploy.sh macht beides + Verify.
 
-**Noch offen (Prioritätsreihenfolge):** echte Datenquelle (blockiert — keine Creds) ·
-Avatar-Outfit (3D-Asset nötig) · TTS-Streaming (geringer Nutzen, LLM dominiert Latenz) ·
-Analytics/A-B (braucht Infra) · Filiale-Kiosk (erst nach Online-Beweis).
+**Echte Datenquelle: ANGEBUNDEN & live** — Provider `martireisen` (`data/martireisenProvider.js`)
+liefert echte Pauschalreisen; Avatar-Outfit per Code gebrandet; TTS auf tts-1-hd; Lead-Dashboard live;
+schönes Hotel-Detail mit Trust-Signalen.
+
+**Nächste Features (mobile-first · schön · umsatzorientiert):**
+1. Direkt-Kontakt-CTAs (Anrufen/WhatsApp) · 2. Refine-Chips · 3. Merkliste/Favoriten ·
+4. Lade-Skeletons · 5. Übergänge + gebrandeter Hintergrund · 6. Sprach-Eingabe (STT) ·
+7. Leads-Dashboard-Ausbau · 8. Mini-Analytics · Daten: Region-Mapping global.
+(Interne Arbeitsnotizen mit vollem Kontext + Deploy-How-to: `AGENT_NOTES.md`, gitignored.)
 
 ## Prinzipien für den ganzen Umbau
 
